@@ -2,13 +2,24 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Travel Itinerary Map with Stop Order</title>
+    <title>Travel Itinerary Map with Stop Order and Transport Icons</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
     <style>
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100vh; }
+        .marker {
+            font-size: 14px;
+            background-color: #f8f8f8;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #555;
+        }
     </style>
 </head>
 <body>
@@ -23,37 +34,28 @@
             zoom: 3
         });
 
-        // City locations with stay durations and order
+        // City locations with stay durations and stop order
         const locations = [
-            { city: 'Santiago', coordinates: [-70.6483, -33.4569], stay: '2 days', transport: 'flight', order: '1st' },
-            { city: 'Puerto Natales', coordinates: [-72.5170, -51.7264], stay: '2 days', transport: 'bus', order: '2nd' },
-            { city: 'El Calafate', coordinates: [-72.2648, -50.3379], stay: '2 days', transport: 'bus', order: '3rd' },
-            { city: 'Ushuaia', coordinates: [-68.3030, -54.8019], stay: '1 day', transport: 'flight', order: '4th' },
-            { city: 'Buenos Aires', coordinates: [-58.3816, -34.6037], stay: '2 days', transport: 'flight', order: '5th' },
-            { city: 'Medellín', coordinates: [-75.5636, 6.2518], stay: '2 days', transport: 'flight', order: '6th' }
+            { city: 'Santiago', coordinates: [-70.6483, -33.4569], stay: 'Few Hours', transport: 'flight', order: '1st Stop' },
+            { city: 'Puerto Natales', coordinates: [-72.5170, -51.7264], stay: '2 Days', transport: 'bus', order: '2nd Stop' },
+            { city: 'El Calafate', coordinates: [-72.2648, -50.3379], stay: '2 Days', transport: 'bus', order: '3rd Stop' },
+            { city: 'Ushuaia', coordinates: [-68.3030, -54.8019], stay: '1 Day', transport: 'flight', order: '4th Stop' },
+            { city: 'Buenos Aires', coordinates: [-58.3816, -34.6037], stay: '2 Days', transport: 'flight', order: '5th Stop' },
+            { city: 'Medellín', coordinates: [-75.5636, 6.2518], stay: '2 Days', transport: 'flight', order: '6th Stop' }
         ];
 
         // Add numbered markers with transport icons for each location
-        locations.forEach(function(location, index) {
+        locations.forEach(function(location) {
             let icon = location.transport === 'bus' ? '🚌' : '✈️';  // Use emoji as icons
 
             // Create a custom marker using numbers and transport icons
             const el = document.createElement('div');
             el.className = 'marker';
-            el.style.fontSize = '14px';
-            el.style.backgroundColor = '#f8f8f8';
-            el.style.borderRadius = '50%';
-            el.style.width = '35px';
-            el.style.height = '35px';
-            el.style.display = 'flex';
-            el.style.justifyContent = 'center';
-            el.style.alignItems = 'center';
-            el.style.border = '2px solid #555';
-            el.textContent = `${location.order}`;  // Show the order (1st, 2nd, etc.)
+            el.textContent = `${location.order}`;
 
             new mapboxgl.Marker(el)
                 .setLngLat(location.coordinates)
-                .setPopup(new mapboxgl.Popup().setHTML(`<h3>${location.order} Stop: ${location.city}</h3><p>Stay: ${location.stay}</p><p>Transport: ${icon}</p>`))  // Display order, stay duration, and transport type
+                .setPopup(new mapboxgl.Popup().setHTML(`<h3>${location.order}: ${location.city}</h3><p>Stay: ${location.stay}</p><p>Transport: ${icon}</p>`))  // Display order, stay duration, and transport type
                 .addTo(map);
         });
 
@@ -175,3 +177,4 @@
     </script>
 </body>
 </html>
+
