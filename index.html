@@ -2,30 +2,19 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Travel Itinerary Map with Stop Order and Transport Icons</title>
+    <title>Travel Itinerary with Animated Routes</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
     <style>
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100vh; }
-        .marker {
-            font-size: 14px;
-            background-color: #f8f8f8;
-            border-radius: 50%;
-            width: 35px;
-            height: 35px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 2px solid #555;
-        }
     </style>
 </head>
 <body>
     <div id="map"></div>
     <script>
-        mapboxgl.accessToken = 'pk.eyJ1IjoiY2hlbHNpYjUxMiIsImEiOiJjbTIyYjN0N3AwNTQ5MmtwcGFsZHJtYjBxIn0.GTaNMeXMhhQBsz6LqKkygQ'; // Replace with your actual token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiY2hlbHNpYjUxMiIsImEiOiJjbTIyYjN0N3AwNTQ5MmtwcGFsZHJtYjBxIn0.GTaNMeXMhhQBsz6LqKkygQ'; // Replace with your token
 
         const map = new mapboxgl.Map({
             container: 'map',
@@ -34,147 +23,122 @@
             zoom: 3
         });
 
-        // City locations with stay durations and stop order
+        // City locations and transport type
         const locations = [
-            { city: 'Santiago', coordinates: [-70.6483, -33.4569], stay: 'Few Hours', transport: 'flight', order: '1st Stop' },
-            { city: 'Puerto Natales', coordinates: [-72.5170, -51.7264], stay: '2 Days', transport: 'bus', order: '2nd Stop' },
-            { city: 'El Calafate', coordinates: [-72.2648, -50.3379], stay: '2 Days', transport: 'bus', order: '3rd Stop' },
-            { city: 'Ushuaia', coordinates: [-68.3030, -54.8019], stay: '1 Day', transport: 'flight', order: '4th Stop' },
-            { city: 'Buenos Aires', coordinates: [-58.3816, -34.6037], stay: '2 Days', transport: 'flight', order: '5th Stop' },
-            { city: 'Medellín', coordinates: [-75.5636, 6.2518], stay: '2 Days', transport: 'flight', order: '6th Stop' }
+            { city: 'Santiago', coordinates: [-70.6483, -33.4569], transport: 'plane' },
+            { city: 'El Calafate', coordinates: [-72.2648, -50.3379], transport: 'plane' },
+            { city: 'Puerto Natales', coordinates: [-72.5170, -51.7264], transport: 'bus' },
+            { city: 'Ushuaia', coordinates: [-68.3030, -54.8019], transport: 'plane' },
+            { city: 'Buenos Aires', coordinates: [-58.3816, -34.6037], transport: 'plane' },
+            { city: 'Medellín', coordinates: [-75.5636, 6.2518], transport: 'plane' }
         ];
 
-        // Add numbered markers with transport icons for each location
+        // Add plane and bus icons for each location
         locations.forEach(function(location) {
-            let icon = location.transport === 'bus' ? '🚌' : '✈️';  // Use emoji as icons
+            let icon = location.transport === 'bus' ? '🚌' : '✈️';  // Use bus or plane emoji for icons
 
-            // Create a custom marker using numbers and transport icons
+            // Create a custom marker using emoji
             const el = document.createElement('div');
             el.className = 'marker';
-            el.textContent = `${location.order}`;
+            el.style.fontSize = '24px';
+            el.textContent = icon;
 
             new mapboxgl.Marker(el)
                 .setLngLat(location.coordinates)
-                .setPopup(new mapboxgl.Popup().setHTML(`<h3>${location.order}: ${location.city}</h3><p>Stay: ${location.stay}</p><p>Transport: ${icon}</p>`))  // Display order, stay duration, and transport type
+                .setPopup(new mapboxgl.Popup().setHTML('<h3>' + location.city + '</h3>'))
                 .addTo(map);
         });
 
-        // Add flight paths and bus routes (GeoJSON LineStrings)
-        const transportPaths = {
-            "type": "FeatureCollection",
-            "features": [
-                {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": [
-                            [-70.6483, -33.4569],  // Santiago
-                            [-72.5170, -51.7264]   // Puerto Natales
-                        ]
+        // Define the flight and bus routes
+        const routes = [
+            {
+                type: 'flight',
+                coordinates: [[-70.6483, -33.4569], [-72.2648, -50.3379]], // Santiago to El Calafate
+            },
+            {
+                type: 'bus',
+                coordinates: [[-72.2648, -50.3379], [-72.5170, -51.7264]], // El Calafate to Puerto Natales
+            },
+            {
+                type: 'flight',
+                coordinates: [[-72.5170, -51.7264], [-68.3030, -54.8019]], // Puerto Natales to Ushuaia
+            },
+            {
+                type: 'flight',
+                coordinates: [[-68.3030, -54.8019], [-58.3816, -34.6037]], // Ushuaia to Buenos Aires
+            },
+            {
+                type: 'flight',
+                coordinates: [[-58.3816, -34.6037], [-75.5636, 6.2518]], // Buenos Aires to Medellín
+            }
+        ];
+
+        // Add the animated flight and bus routes
+        routes.forEach((route, index) => {
+            map.on('load', function () {
+                const geojson = {
+                    "type": "FeatureCollection",
+                    "features": [{
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": route.coordinates
+                        }
+                    }]
+                };
+
+                map.addSource('route' + index, {
+                    'type': 'geojson',
+                    'data': geojson
+                });
+
+                map.addLayer({
+                    'id': 'route' + index,
+                    'type': 'line',
+                    'source': 'route' + index,
+                    'layout': {
+                        'line-join': 'round',
+                        'line-cap': 'round'
                     },
-                    "properties": {
-                        "description": "Flight: Santiago to Puerto Natales",
-                        "transport": "flight"
-                    }
-                },
-                {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": [
-                            [-72.5170, -51.7264],  // Puerto Natales
-                            [-72.2648, -50.3379]   // El Calafate (bus route)
+                    'paint': {
+                        'line-color': route.type === 'flight' ? '#007bff' : '#ffa500', // Blue for flight, orange for bus
+                        'line-width': 4,
+                        'line-opacity': 0.8,
+                        'line-gradient': [
+                            'interpolate',
+                            ['linear'],
+                            ['line-progress'],
+                            0, "rgba(255, 255, 255, 0)",
+                            0.1, route.type === 'flight' ? "rgba(0, 123, 255, 1)" : "rgba(255, 165, 0, 1)",
+                            0.5, route.type === 'flight' ? "rgba(0, 123, 255, 1)" : "rgba(255, 165, 0, 1)",
+                            1, "rgba(255, 255, 255, 0)"
                         ]
-                    },
-                    "properties": {
-                        "description": "Bus: Puerto Natales to El Calafate",
-                        "transport": "bus"
                     }
-                },
-                {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": [
-                            [-72.2648, -50.3379],  // El Calafate
-                            [-68.3030, -54.8019]   // Ushuaia
-                        ]
-                    },
-                    "properties": {
-                        "description": "Flight: El Calafate to Ushuaia",
-                        "transport": "flight"
-                    }
-                },
-                {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": [
-                            [-68.3030, -54.8019],  // Ushuaia
-                            [-58.3816, -34.6037]   // Buenos Aires
-                        ]
-                    },
-                    "properties": {
-                        "description": "Flight: Ushuaia to Buenos Aires",
-                        "transport": "flight"
-                    }
-                },
-                {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": [
-                            [-58.3816, -34.6037],  // Buenos Aires
-                            [-75.5636, 6.2518]     // Medellín
-                        ]
-                    },
-                    "properties": {
-                        "description": "Flight: Buenos Aires to Medellín",
-                        "transport": "flight"
-                    }
+                });
+
+                // Animate the line
+                let progress = 0;
+                const speedFactor = 0.02; // Animation speed (adjust for faster/slower)
+
+                function animateLine() {
+                    progress += speedFactor;
+                    if (progress > 1) progress = 0; // Loop animation
+
+                    map.setPaintProperty('route' + index, 'line-gradient', [
+                        'interpolate',
+                        ['linear'],
+                        ['line-progress'],
+                        0, "rgba(255, 255, 255, 0)",
+                        progress, route.type === 'flight' ? "rgba(0, 123, 255, 1)" : "rgba(255, 165, 0, 1)",
+                        1, "rgba(255, 255, 255, 0)"
+                    ]);
+
+                    requestAnimationFrame(animateLine);
                 }
-            ]
-        };
 
-        // Add the transport paths to the map
-        map.on('load', function() {
-            map.addSource('transportPaths', {
-                "type": "geojson",
-                "data": transportPaths
-            });
-            
-            map.addLayer({
-                "id": "transportPathsLayer",
-                "type": "line",
-                "source": "transportPaths",
-                "layout": {
-                    "line-join": "round",
-                    "line-cap": "round"
-                },
-                "paint": {
-                    "line-color": [
-                        "match",
-                        ["get", "transport"],
-                        "flight", "#007bff",  // Blue for flights
-                        "bus", "#ffa500",     // Orange for bus routes
-                        "#888"  // Default color
-                    ],
-                    "line-width": 4
-                }
-            });
-
-            // Add popups to transport paths
-            map.on('click', 'transportPathsLayer', function (e) {
-                const coordinates = e.lngLat;
-                const description = e.features[0].properties.description;
-
-                new mapboxgl.Popup()
-                    .setLngLat(coordinates)
-                    .setHTML(description)
-                    .addTo(map);
+                animateLine(); // Start the animation
             });
         });
     </script>
 </body>
 </html>
-
